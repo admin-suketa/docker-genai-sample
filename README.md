@@ -139,7 +139,7 @@ You can populate the form using the following values:
 ```
 Neo4j URI - neo4j://192.168.1.3:7687
 NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=password
+NEO4J_PASSWORD=<password>
 OLLAMA_BASE_URL=http://host.docker.internal:11434
 OPENAI Key=<add it here>
 ```
