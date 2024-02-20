@@ -102,6 +102,10 @@ server-1  |
 
 Open a browser and view the application at [http://localhost:8000](http://localhost:8000). You should see a simple Streamlit application. The application may take a few minutes to download the embedding model. While the download is in progress, **Running** appears in the top-right corner.
 
+
+<img width="457" alt="streamlit" src="https://github.com/ajeetraina/docker-genai-sample/assets/313480/7d44bec5-280c-41df-bc58-2c89fa069a07">
+
+
 The application requires a Neo4j database service and an LLM service to
 function. If you have access to services that you ran outside of Docker, specify
 the connection information and try it out. If you don't have the services
