@@ -12,20 +12,19 @@ from chains import (
     load_llm,
 )
 
+# Get environment variables
 url = os.getenv("NEO4J_URI")
 username = os.getenv("NEO4J_USERNAME")
 password = os.getenv("NEO4J_PASSWORD")
 ollama_base_url = os.getenv("OLLAMA_BASE_URL")
-embedding_model_name = os.getenv("EMBEDDING_MODEL", "SentenceTransformer" )
+embedding_model_name = os.getenv("EMBEDDING_MODEL", "SentenceTransformer")
 llm_name = os.getenv("LLM", "llama2")
-url = os.getenv("NEO4J_URI")
 
-# Check if the required environment variables are set
-if not all([url, username, password,
-          ollama_base_url]):
+# Prompt user for environment variables if not set
+if not all([url, username, password, ollama_base_url]):
     st.write("The application requires some information before running.")
     with st.form("connection_form"):
-        url = st.text_input("Enter NEO4J_URI",)
+        url = st.text_input("Enter NEO4J_URI")
         username = st.text_input("Enter NEO4J_USERNAME")
         password = st.text_input("Enter NEO4J_PASSWORD", type="password")
         ollama_base_url = st.text_input("Enter OLLAMA_BASE_URL")
@@ -33,7 +32,7 @@ if not all([url, username, password,
         openai_apikey = st.text_input("Enter OPENAI_API_KEY", type="password")
         submit_button = st.form_submit_button("Submit")
     if submit_button:
-        if not all([url, username, password, ]):
+        if not all([url, username, password]):
             st.write("Enter the Neo4j information.")
         if not (ollama_base_url or openai_apikey):
             st.write("Enter the Ollama URL or OpenAI API Key.")
@@ -43,13 +42,15 @@ if not all([url, username, password,
 
 os.environ["NEO4J_URL"] = url
 
+# Set up logging
 logger = get_logger(__name__)
 
+# Load embedding model
 embeddings, dimension = load_embedding_model(
     embedding_model_name, config={"ollama_base_url": ollama_base_url}, logger=logger
 )
 
-
+# Custom callback handler for streaming updates to the UI
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container, initial_text=""):
         self.container = container
@@ -59,51 +60,55 @@ class StreamHandler(BaseCallbackHandler):
         self.text += token
         self.container.markdown(self.text)
 
+# Load language model (LLM)
 llm = load_llm(llm_name, logger=logger, config={"ollama_base_url": ollama_base_url})
 
-
+# Main function
 def main():
-        st.header("📄Chat with your pdf file")
+    st.header("📄Chat with your pdf file")
 
-        # upload a your pdf file
-        pdf = st.file_uploader("Upload your PDF", type="pdf")
+    # Upload PDF file
+    pdf = st.file_uploader("Upload your PDF", type="pdf")
 
-        if pdf is not None:
-            pdf_reader = PdfReader(pdf)
+    if pdf is not None:
+        # Extract text from PDF
+        pdf_reader = PdfReader(pdf)
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text()
 
-            text = ""
-            for page in pdf_reader.pages:
-                text += page.extract_text()
+        # Split text into smaller chunks
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000, chunk_overlap=200, length_function=len
+        )
+        chunks = text_splitter.split_text(text=text)
 
-            # langchain_textspliter
-            text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=1000, chunk_overlap=200, length_function=len
-            )
+        # Store text chunks in Neo4j database as vectors
+        vectorstore = Neo4jVector.from_texts(
+            chunks,
+            url=url,
+            username=username,
+            password=password,
+            embedding=embeddings,
+            index_name="pdf_bot",
+            node_label="PdfBotChunk",
+            pre_delete_collection=False,  # Delete existing PDF data
+        )
 
-            chunks = text_splitter.split_text(text=text)
+        # Initialize question answering (QA) system
+        qa = RetrievalQA.from_chain_type(
+            llm=llm, chain_type="stuff", retriever=vectorstore.as_retriever()
+        )
 
-            # Store the chunks part in db (vector)
-            vectorstore = Neo4jVector.from_texts(
-                chunks,
-                url=url,
-                username=username,
-                password=password,
-                embedding=embeddings,
-                index_name="pdf_bot",
-                node_label="PdfBotChunk",
-                pre_delete_collection=False,  # Delete existing PDF data
-            )
-            qa = RetrievalQA.from_chain_type(
-                llm=llm, chain_type="stuff", retriever=vectorstore.as_retriever()
-            )
+        # Accept user questions/queries
+        query = st.text_input("Ask questions about your PDF file")
 
-            # Accept user questions/query
-            query = st.text_input("Ask questions about your PDF file")
+        if query:
+            # Initialize StreamHandler to update UI with responses
+            stream_handler = StreamHandler(st.empty())
+            # Run QA system with user query
+            qa.run(query, callbacks=[stream_handler])
 
-            if query:
-                stream_handler = StreamHandler(st.empty())
-                qa.run(query, callbacks=[stream_handler])
-
-
+# Entry point of the script
 if __name__ == "__main__":
      main()
