@@ -25,7 +25,7 @@ def load_embedding_model(embedding_model_name: str, logger=BaseLogger(), config=
         dimension = 4096
         logger.info("Embedding: Using Ollama")
     elif embedding_model_name == "openai":
-        embeddings = OpenAIEmbeddings()
+        embeddings = OpenAIEmbeddings(deployment="anansi")
         dimension = 1536
         logger.info("Embedding: Using OpenAI")
     elif embedding_model_name == "aws":

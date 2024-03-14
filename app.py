@@ -38,8 +38,12 @@ if not all([url, username, password,
         if not (ollama_base_url or openai_apikey):
             st.write("Enter the Ollama URL or OpenAI API Key.")
         if openai_apikey:
-            llm_name = "gpt-3.5"
+            llm_name = "gpt-35-turbo"
             os.environ['OPENAI_API_KEY'] = openai_apikey
+            os.environ["OPENAI_API_TYPE"] = "azure"
+            os.environ["OPENAI_API_BASE"] = "https://api-key.openai.azure.com/"
+            # os.environ["OPENAI_API_KEY"] = "your AzureOpenAI key"
+            os.environ["OPENAI_API_VERSION"] = "2023-05-15"
 
 os.environ["NEO4J_URL"] = url
 
