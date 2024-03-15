@@ -1,8 +1,9 @@
 streamlit
-langchain==0.0.324
+langchain
 neo4j
-sentence_transformers==2.2.2
+sentence_transformers==2.5.1
 # torch==2.0.1
 torch==2.2.1
 PyPDF2
-openai==0.28.1
+openai
+langchain-openai 

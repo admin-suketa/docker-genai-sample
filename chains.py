@@ -1,4 +1,5 @@
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
+from langchain_openai import AzureChatOpenAI
 from langchain.embeddings import (
     OllamaEmbeddings,
     SentenceTransformerEmbeddings,
@@ -25,7 +26,10 @@ def load_embedding_model(embedding_model_name: str, logger=BaseLogger(), config=
         dimension = 4096
         logger.info("Embedding: Using Ollama")
     elif embedding_model_name == "openai":
-        embeddings = OpenAIEmbeddings(deployment="anansi")
+        embeddings = AzureOpenAIEmbeddings(
+            azure_deployment="anansi",
+            openai_api_version="2023-12-01-preview",
+        )
         dimension = 1536
         logger.info("Embedding: Using OpenAI")
     elif embedding_model_name == "aws":
@@ -45,9 +49,13 @@ def load_llm(llm_name: str, logger=BaseLogger(), config={}):
     if llm_name == "gpt-4":
         logger.info("LLM: Using GPT-4")
         return ChatOpenAI(temperature=0, model_name="gpt-4", streaming=True)
-    elif llm_name == "gpt-3.5":
+    elif llm_name == "gpt-35-turbo":
         logger.info("LLM: Using GPT-3.5")
-        return ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo", streaming=True)
+        return AzureChatOpenAI(
+            openai_api_version="2023-12-01-preview",
+            azure_deployment="anansi",
+            streaming=True,
+        )
     elif llm_name == "claudev2":
         logger.info("LLM: ClaudeV2")
         return BedrockChat(
