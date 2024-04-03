@@ -27,8 +27,8 @@ def load_embedding_model(embedding_model_name: str, logger=BaseLogger(), config=
         logger.info("Embedding: Using Ollama")
     elif embedding_model_name == "openai":
         embeddings = AzureOpenAIEmbeddings(
-            azure_deployment="anansi",
-            openai_api_version="2023-12-01-preview",
+            azure_deployment="anansi-35-turbo",
+            openai_api_version="2024-02-01",
         )
         dimension = 1536
         logger.info("Embedding: Using OpenAI")
@@ -52,8 +52,8 @@ def load_llm(llm_name: str, logger=BaseLogger(), config={}):
     elif llm_name == "gpt-35-turbo":
         logger.info("LLM: Using GPT-3.5")
         return AzureChatOpenAI(
-            openai_api_version="2023-12-01-preview",
-            azure_deployment="anansi",
+            openai_api_version="2024-02-01",
+            azure_deployment="anansi-35-turbo",
             streaming=True,
         )
     elif llm_name == "claudev2":
